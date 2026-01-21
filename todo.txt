@@ -1,0 +1,7 @@
+1. Langchain rag -> opensearch.
+2. make some base scads. (make an objective.)
+3. make chat ui
+4. make it make scads really well.
+
+using the wasm, or what??
+good question
