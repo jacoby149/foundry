@@ -1,7 +1,5 @@
-1. Langchain rag -> opensearch.
-2. make some base scads. (make an objective.)
-3. make chat ui
-4. make it make scads really well.
 
-using the wasm, or what??
-good question
+1. make the agentic flow.
+  type in chat what you want, then it shows it in the ui.
+  a. add a button -> self criticize.
+  b. add typing in chat for you to criticize!

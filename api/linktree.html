@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Object Foundry</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #101225;
+      --bg-card: #181e2d;
+      --neon-blue: #18f0ff;
+      --neon-pink: #e65bff;
+      --neon-green: #30ffcf;
+      --neon-purple: #944fff;
+      --fg-white: #e6f6ff;
+      --fg-muted: #7edbf3;
+      --shadow-blue: 0 2px 16px #11e8ffb7;
+      --shadow-pink: 0 2px 16px #e65bffb7;
+      --shadow-green: 0 2px 16px #30eecfb5;
+      --shadow-purple: 0 2px 16px #944fff8b;
+      --border: #24264a;
+    }
+    html, body {
+      height: 100%;
+      background: var(--bg-deep);
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+      color: var(--fg-white);
+    }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(116deg, #191e33 36%, #0b1b29 77%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .container {
+      margin: 0 auto;
+      max-width: 390px;
+      width: 96vw;
+      padding: 2.1rem 1.45rem 1.19rem;
+      background: var(--bg-card);
+      border-radius: 1.12em;
+      box-shadow: 0 1px 20px #06ffff38;
+      display: flex; flex-direction: column; align-items: center;
+      border: 2.7px solid var(--neon-blue);
+      position: relative;
+      overflow: hidden;
+    }
+    .container:before {
+      /* neon edge line at the top */
+      content: "";
+      display: block;
+      position: absolute;
+      top: -2px; left: 10px; width: calc(100% - 20px); height: 3px;
+      background: linear-gradient(90deg, #28f0ff 3%, #e05fff 56%, #15ffbc 100%);
+      border-radius: 3px 3px 7px 7px;
+      box-shadow: 0 0 8px #26feff;
+      opacity: 0.82;
+    }
+    h1 {
+      margin: 0 0 .30em 0;
+      font-size: 2.13rem;
+      font-weight: 900;
+      letter-spacing: 0.11em;
+      color: var(--neon-blue);
+      text-shadow:
+        0 2px 7px #1cf6ffa9,
+        0 0.5px 6px #54e8ffc2;
+      background: linear-gradient(98deg, var(--neon-blue) 67%, #fff8 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+    .subtitle {
+      color: var(--fg-muted);
+      font-size: 1.08rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 1.08em;
+      letter-spacing: .14em;
+      text-shadow: 0 1.5px 5px #0ffb, 0 1.5px 5px #2370e4b2;
+      opacity: 0.92;
+    }
+    ul {
+      list-style: none;
+      padding: 0; margin: 0 0 .35em 0;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 1.19em;
+    }
+    li { width: 100%; }
+    .link-btn {
+      border-radius: 1.08em;
+      color: var(--fg-white);
+      font-weight: 900;
+      text-decoration: none;
+      font-size: 1.09em;
+      letter-spacing: .08em;
+      padding: 0.99em 0;
+      width: 100%;
+      display: block;
+      box-shadow: 0 3px 11px #0ff4;
+      border-width: 2.4px;
+      border-style: solid;
+      outline: none;
+      margin: 0 auto;
+      text-shadow: 0 1.5px 7px #48eaef91;
+      transition: background .14s, color .11s, border-color .13s, box-shadow .15s, transform .08s;
+      position: relative;
+      overflow: hidden;
+      z-index: 2;
+    }
+    /* Button colorways */
+    .btn-blue {
+      background: linear-gradient(90deg, #202b44 0, #1af1ff 95%);
+      border-color: var(--neon-blue);
+      box-shadow: var(--shadow-blue);
+    }
+    .btn-blue:active, .btn-blue:focus, .btn-blue:hover {
+      background: var(--neon-blue);
+      color: #081b22;
+      border-color: #1ccaf6;
+      box-shadow: 0 0 0 2.5px #0ddfffb8, 0 3px 16px #21e9ffae;
+    }
+    .btn-pink {
+      background: linear-gradient(90deg, #251635 0, #e849f5 99%);
+      border-color: var(--neon-pink);
+      box-shadow: var(--shadow-pink);
+    }
+    .btn-pink:active, .btn-pink:focus, .btn-pink:hover {
+      background: var(--neon-pink);
+      color: #251635;
+      border-color: #ef90fd;
+      box-shadow: 0 0 0 2.6px #ef68ffb8, 0 3px 18px #c465f0b8;
+    }
+    .btn-purple {
+      background: linear-gradient(92deg, #2b2355 0%, #944fff 100%);
+      border-color: var(--neon-purple);
+      box-shadow: var(--shadow-purple);
+    }
+    .btn-purple:active, .btn-purple:focus, .btn-purple:hover {
+      background: var(--neon-purple);
+      color: #221640;
+      border-color: #d9a9ff;
+      box-shadow: 0 0 0 2.5px #944fffcc, 0 3px 18px #944fff90;
+    }
+    .btn-green {
+      background: linear-gradient(92deg, #173838 0, #19ffe7 99%);
+      border-color: var(--neon-green);
+      box-shadow: var(--shadow-green);
+    }
+    .btn-green:active, .btn-green:focus, .btn-green:hover {
+      background: var(--neon-green);
+      color: #163333;
+      border-color: #48ffe1;
+      box-shadow: 0 0 0 2.5px #21ffeeb8, 0 3px 16px #30ffcf8a;
+    }
+    .footer {
+      margin-top: 2.05em; padding-bottom: .17em;
+      font-size: .98em;
+      color: var(--neon-blue);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-align: center;
+      opacity: 0.74;
+      text-shadow: 0 1.5px 9px #5affff62;
+      user-select: none;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.19rem; }
+      .container { padding: 1.05em 2vw 0.7em; border-radius: 0.9em; }
+      .subtitle { font-size: .81rem; }
+      ul { gap: 0.75em; }
+      .link-btn { font-size: .96em; border-radius: .99em;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AI Object foundry</h1>
+    <div class="subtitle">Ai that thinks like an engineer.</div>
+    <ul>
+      <li><a class="link-btn btn-blue" href="/docs">Swagger API Docs</a></li>
+      <li><a class="link-btn btn-pink" href="/admin-ui">Admin Panel (Configure, Test)</a></li>
+      <li><a class="link-btn btn-purple" href="http://localhost:3000">Parts Maker Chat</a></li>
+      <li><a class="link-btn btn-green" href="http://localhost:3000">Parts Explorer</a></li>
+    </ul>
+    <div class="footer">
+      &#169; 2026 AI Object Foundry
+    </div>
+  </div>
+</body>
+</html>

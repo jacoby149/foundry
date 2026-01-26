@@ -1,0 +1,49 @@
+:root {
+  --bg: #f8fafd;
+  --card-bg: #fff;
+  --primary: #6366f1;           /* modern purple-indigo */
+  --primary-dark: #3939c7;      /* deeper indigo */
+  --primary-fg: #fff;
+  --primary-soft: #eef1fd;      /* subtle purple/blue hover for bg */
+  --text: #232836;
+  --text-light: #8b98b0;
+  --border: #e5e7eb;
+  --chat-user: #6366f1;         /* match primary */
+  --chat-assistant: #f2f5fa;
+  --shadow: 0 3px 16px 0 rgba(0,0,40,.05);
+
+  color-scheme: light;
+  font-family: 'Inter', Arial, sans-serif;
+  font-feature-settings: "ss01" on, "ss02" on;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg: #191b20;
+  --card-bg: #23262f;
+  --primary: #4f61c9;           /* lighter indigo for dark mode */
+  --primary-dark: #525bee;
+  --primary-fg: #fff;
+  --primary-soft: #24275c;      /* subtle indigo hover for bg in dark */
+  --text: #f5f8fb;
+  --text-light: #919ab6;
+  --border: #2b2d38;
+  --chat-user: #7d89f1;
+  --chat-assistant: #21222c;
+  --shadow: 0 6px 32px 0 rgba(18,28,45,.28);
+  color-scheme: dark;
+}
+
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+
+button:focus-visible, input:focus-visible {
+  outline: 2.5px solid var(--primary);
+  outline-offset: 1.5px;
+}
