@@ -35,10 +35,20 @@ export default function App() {
   return (
     <Router>
       <nav style={navBarStyle}>
-        <span style={{fontWeight:700,letterSpacing:-1}}>Parts Studio</span>
-        <span style={{display:'flex',alignItems:'center', gap:28}}>
-          {/* <NavLink to="ui/" end style={({isActive})=>({color: isActive? 'var(--primary)' : 'var(--text-light)', fontWeight:500})}>Chat</NavLink> */}
-          {/* <NavLink to="ui/explorer" style={({isActive})=>({color: isActive? 'var(--primary)': 'var(--text-light)', fontWeight:500})}>Explorer</NavLink> */}
+        <span style={{ fontWeight: 700, letterSpacing: -1 }}>Parts Studio</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+          <a
+            href="http://localhost:8000"
+            style={{
+              color: 'var(--primary)',
+              fontWeight: 500,
+              fontSize: 16,
+              textDecoration: 'underline',
+              marginRight: 24
+            }}
+          >
+            &larr; Go Back Home
+          </a>
           <button
             aria-label="Toggle dark mode"
             style={{
@@ -52,7 +62,7 @@ export default function App() {
             onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
           >{theme === 'dark' ? "🌙" : "☀️"}</button>
         </span>
-      </nav>
+      </nav>      
       <main style={{
         maxWidth: 1100,
         margin: '40px auto 0 auto',
