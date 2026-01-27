@@ -10,11 +10,12 @@ langchain = "*"
 langchain-openai = "*"
 openai = "*"
 langchain-core = "*"
-genesis-world = "*"
 fastapi = "*"
 uvicorn = "*"
-opencv-python = "*"
 numpy = "*"
+websockets = "*"
+mujoco = "*"
+opencv-python-headless = "*"
 
 [dev-packages]
 

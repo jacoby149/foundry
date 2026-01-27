@@ -1,3 +1,7 @@
+genesis ai
+1. make the runpod deployment.
+2. trigger runpod + proxy runpod stream.
+
 
 1. make the agentic flow.
   type in chat what you want, then it shows it in the ui.

@@ -7,19 +7,20 @@ RUN bun install
 RUN bun run build
 
 # --- FIX: Use linux/amd64 for M3 Mac compatibility ---
-FROM --platform=linux/amd64 python:3.10-slim
+FROM python:3.10-slim
 
 WORKDIR /app
 
 # --- FIX: Updated package names for Debian Bookworm/Trixie ---
 # 'libgl1-mesa-glx' is deprecated. We use 'libgl1' instead.
+# We only need the runtime libraries for OpenGL (MuJoCo) and OpenCV
+# Install runtime libraries for OpenCV and MuJoCo (OSMesa)
 RUN apt-get update && apt-get install -y \
-    build-essential \
     libgl1 \
     libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+    libosmesa6-dev \
+    && rm -rf /var/lib/apt/lists/*# Install pipenv
 
-# Install pipenv
 RUN pip install --no-cache-dir pipenv
 
 # Copy Pipfiles

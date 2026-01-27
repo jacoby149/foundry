@@ -13,24 +13,28 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [activeKeys, setActiveKeys] = useState<KeyState>({});
   
-  // TOGGLE STATE: Default to Test Mode (Green Box)
+  // TOGGLE STATE: Default to Test Mode so you can check connection first
   const [isTestMode, setIsTestMode] = useState<boolean>(true);
-  
-  // This helps force the browser to reload the image when we switch modes
-  const [streamKey, setStreamKey] = useState(Date.now());
+  const [streamKey, setStreamKey] = useState(Date.now()); // Forces img reload
 
   const wsRef = useRef<WebSocket | null>(null);
 
-  // --- DYNAMIC URLS ---
-  const endpointPrefix = isTestMode ? "stream" : "genesis_stream";
+  // --- DYNAMIC ENDPOINT SWITCHING ---
+  // If Test Mode -> "/stream"
+  // If Physics Mode -> "/sim_stream"
+  const prefix = isTestMode ? "stream" : "sim_stream";
   
-  // We add ?t=... to force the browser to re-request the stream
-  const STREAM_URL = `http://${backendUrl}/${endpointPrefix}/video_feed?t=${streamKey}`;
-  const WS_URL = `ws://${backendUrl}/${endpointPrefix}/ws`;
+  // We add ?t=... to force the browser to drop the old connection and start a new one
+  const STREAM_URL = `http://${backendUrl}/${prefix}/video_feed?t=${streamKey}`;
+  const WS_URL = `ws://${backendUrl}/${prefix}/ws`;
 
   // --- WEBSOCKET CONNECTION ---
   useEffect(() => {
-    console.log(`Connecting to: ${WS_URL}`);
+    console.log(`[Switching Network] Connecting to: ${WS_URL}`);
+    
+    // Close existing connection if any
+    if (wsRef.current) wsRef.current.close();
+
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
@@ -41,7 +45,7 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
     return () => {
       if (ws.readyState === WebSocket.OPEN) ws.close();
     };
-  }, [WS_URL]); // Re-run this effect when WS_URL changes
+  }, [WS_URL]); // Triggered when WS_URL changes (via toggle)
 
   // --- KEYBOARD CONTROLS ---
   useEffect(() => {
@@ -79,14 +83,14 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
 
   const toggleMode = () => {
       setIsTestMode(!isTestMode);
-      setStreamKey(Date.now()); // Force video reload
+      setStreamKey(Date.now()); // This forces the <img> tag to refresh
   };
 
   return (
     <div className="genesis-wrapper">
       <div className="genesis-header">
         <div className="header-left">
-            <h2>{isTestMode ? "Test Stream (Green Box)" : "Genesis Simulation"}</h2>
+            <h2>{isTestMode ? "Simple Stream Test" : "MuJoCo Physics"}</h2>
             <div className={`status-badge ${isConnected ? 'live' : 'offline'}`}>
             <span className="dot">●</span> 
             {isConnected ? "CONNECTED" : "DISCONNECTED"}
@@ -97,12 +101,12 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
             className={`mode-toggle ${isTestMode ? 'test-mode' : 'real-mode'}`}
             onClick={toggleMode}
         >
-            {isTestMode ? "Switch to Real Physics" : "Switch to Test Mode"}
+            {isTestMode ? "→ Switch to Physics Engine" : "← Switch to Test Mode"}
         </button>
       </div>
 
       <div className="stream-container">
-        {/* We use key={streamKey} to force React to destroy and recreate the img tag */}
+        {/* key={streamKey} forces React to destroy and recreate this element when toggling */}
         <img 
             key={streamKey} 
             src={STREAM_URL} 
@@ -111,7 +115,6 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
         />
       </div>
 
-      {/* Control Pad */}
       <div className="control-panel">
         <div className="d-pad">
           <div className="d-row">
@@ -124,8 +127,8 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
           </div>
         </div>
         <div className="instructions">
-          <p>Mode: <strong>{isTestMode ? "SIMPLE TEST" : "PHYSICS ENGINE"}</strong></p>
-          <p>Use <strong>Arrow Keys</strong> to move.</p>
+          <p>Current Backend: <code>/{prefix}</code></p>
+          <p>{isTestMode ? "Testing Network Latency" : "Controlling Physics Engine"}</p>
         </div>
       </div>
     </div>
