@@ -4,16 +4,19 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-uvicorn = "*"
-fastapi = "*"
 httpx = "*"
 trimesh = "*"
 langchain = "*"
 langchain-openai = "*"
 openai = "*"
 langchain-core = "*"
+genesis-world = "*"
+fastapi = "*"
+uvicorn = "*"
+opencv-python = "*"
+numpy = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.13"
+python_version = "3.10"

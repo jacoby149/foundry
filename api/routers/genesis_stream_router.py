@@ -7,33 +7,45 @@ import time
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse, HTMLResponse
 
+# --- CONFIGURATION: Docker / M3 Mac Optimization ---
+# We use low resolution and CPU backend to ensure this runs 
+# inside a Docker container without GPU passthrough.
+RENDER_WIDTH = 320
+RENDER_HEIGHT = 240
+FPS_LIMIT = 20
+BACKEND = gs.cpu  # <--- Critical for M3 Docker compatibility
+
 # --- 1. Simulation Manager ---
 class SimulationManager:
     def __init__(self):
         # Prevent re-initialization issues if imported multiple times
         if not gs.is_initialized():
-            gs.init(backend=gs.gpu)
+            # Force CPU backend for Docker compatibility
+            gs.init(backend=BACKEND, logging_level='warning')
         
         self.scene = gs.Scene(
             viewer_options=gs.options.ViewerOptions(
-                res=(960, 640),
+                res=(RENDER_WIDTH, RENDER_HEIGHT),
+                camera_pos=(3.0, 3.0, 2.5),
+                camera_lookat=(0.0, 0.0, 0.5),
+                camera_fov=40,
             ),
             sim_options=gs.options.SimOptions(dt=0.01),
-            show_viewer=False, 
+            show_viewer=False, # Essential for headless Docker
         )
 
         self.plane = self.scene.add_entity(gs.morphs.Plane())
         
-        # Replace this with your humanoid XML
+        # Replace this with your humanoid XML if you have one
         self.robot = self.scene.add_entity(
-            gs.morphs.Box(size=(0.5, 0.5, 1.0), pos=(0, 0, 2.0)),
+            gs.morphs.Box(size=(0.5, 0.5, 1.0), pos=(0, 0, 1.0)),
         )
 
         self.cam = self.scene.add_camera(
-            res=(640, 480),
-            pos=(5.0, 0.0, 2.5),
-            lookat=(0, 0, 1.0),
-            fov=40,
+            res=(RENDER_WIDTH, RENDER_HEIGHT),
+            pos=(4.0, 0.0, 2.0),
+            lookat=(0, 0, 0.5),
+            fov=45,
             gui_mode=False,
         )
 
@@ -63,7 +75,6 @@ class SimulationManager:
 
         # Apply force if any key is pressed
         if np.linalg.norm(force) > 0:
-            # Note: Verify the DOF count matches your specific robot entity
             try:
                 # Assuming a 6-DOF free joint for the box/humanoid root
                 dof_force = np.concatenate([force, [0,0,0]])
@@ -83,12 +94,18 @@ class SimulationManager:
             
             # Render
             self.cam.render()
-            rgb = self.cam.get_color_texture().cpu().numpy()
             
+            # Since we are on CPU backend, .cpu() isn't strictly necessary but safe
+            rgb = self.cam.get_color_texture().numpy()
+            
+            # Ensure format is correct for OpenCV
             if rgb.dtype != np.uint8:
                 rgb = (rgb * 255).astype(np.uint8)
+            
             bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
-            ret, buffer = cv2.imencode('.jpg', bgr)
+            
+            # Encode with lower quality (60%) for faster network streaming/lower CPU usage
+            ret, buffer = cv2.imencode('.jpg', bgr, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
 
             with self.lock:
                 self.current_frame = buffer.tobytes()
@@ -98,11 +115,10 @@ sim = SimulationManager()
 sim.start_loop()
 
 # --- 2. API Router ---
-# We define the prefix here so internal links work correctly
 PREFIX = "/genesis_stream"
 router = APIRouter(prefix=PREFIX, tags=["Genesis"])
 
-# HTML Client - Updated to use the PREFIX in URLs
+# HTML Client (Optional fallback if not using React)
 html = f"""
 <!DOCTYPE html>
 <html>
@@ -110,23 +126,20 @@ html = f"""
         <title>Genesis Stream</title>
         <style>
             body {{ display: flex; flex-direction: column; align-items: center; background: #222; color: white; font-family: sans-serif; }}
-            img {{ border: 2px solid #555; margin-top: 20px; }}
+            img {{ border: 2px solid #555; margin-top: 20px; image-rendering: pixelated; }}
             .status {{ margin-top: 10px; color: #0f0; }}
         </style>
     </head>
     <body>
-        <h1>Genesis Remote Control</h1>
-        <!-- Note the path includes the prefix -->
-        <img src="{PREFIX}/video_feed" width="640" height="480">
+        <h1>Genesis Remote Control (Docker Mode)</h1>
+        <img src="{PREFIX}/video_feed" width="{RENDER_WIDTH * 2}" height="{RENDER_HEIGHT * 2}">
         <div class="status">Controls: Arrow Keys</div>
         <script>
-            // Dynamically build the WebSocket URL with the prefix
             const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = protocol + "//" + location.host + "{PREFIX}/ws";
             const ws = new WebSocket(wsUrl);
             
-            ws.onopen = () => console.log("Connected to Controls at " + wsUrl);
-            ws.onerror = (e) => console.log("WS Error", e);
+            ws.onopen = () => console.log("Connected");
 
             window.addEventListener("keydown", function(e) {{
                 if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {{
@@ -147,7 +160,6 @@ html = f"""
 
 @router.get("/")
 async def get_interface():
-    """Returns the control page"""
     return HTMLResponse(html)
 
 def frame_generator():
@@ -160,7 +172,8 @@ def frame_generator():
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
         
-        time.sleep(0.03) # Cap at ~30 FPS
+        # Limit FPS to save CPU cycles in Docker
+        time.sleep(1.0 / FPS_LIMIT)
 
 @router.get("/video_feed")
 async def video_feed():
@@ -177,7 +190,6 @@ async def websocket_endpoint(websocket: WebSocket):
             sim.update_key(event['key'], is_pressed)
             
     except WebSocketDisconnect:
-        # Reset keys on disconnect so robot doesn't get stuck moving forever
         for key in sim.keys:
             sim.keys[key] = False
         print("Client disconnected")
