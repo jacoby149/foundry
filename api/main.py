@@ -7,7 +7,7 @@ from routers.openscad_playground import router as openscad_playground_router
 from routers.openscad_render import router as openscad_render_router
 from routers.chat import router as chat_router # Correct import for your project
 # from routers.genesis_stream_router import router as genesis_router
-
+from routers.stream_test_router import router as stream_router
 app = FastAPI(
     title="AI Object Foundry",
     description="""
@@ -30,6 +30,8 @@ app.include_router(openscad_playground_router)
 app.include_router(openscad_render_router)
 app.include_router(chat_router)
 # app.include_router(genesis_router)
+app.include_router(stream_router)
+
 
 @app.get("/", response_class=HTMLResponse)
 def root():

@@ -12,13 +12,25 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
 }) => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [activeKeys, setActiveKeys] = useState<KeyState>({});
+  
+  // TOGGLE STATE: Default to Test Mode (Green Box)
+  const [isTestMode, setIsTestMode] = useState<boolean>(true);
+  
+  // This helps force the browser to reload the image when we switch modes
+  const [streamKey, setStreamKey] = useState(Date.now());
+
   const wsRef = useRef<WebSocket | null>(null);
 
-  // Construct URLs
-  const STREAM_URL = `http://${backendUrl}/genesis_stream/video_feed`;
-  const WS_URL = `ws://${backendUrl}/genesis_stream/ws`;
+  // --- DYNAMIC URLS ---
+  const endpointPrefix = isTestMode ? "stream" : "genesis_stream";
+  
+  // We add ?t=... to force the browser to re-request the stream
+  const STREAM_URL = `http://${backendUrl}/${endpointPrefix}/video_feed?t=${streamKey}`;
+  const WS_URL = `ws://${backendUrl}/${endpointPrefix}/ws`;
 
+  // --- WEBSOCKET CONNECTION ---
   useEffect(() => {
+    console.log(`Connecting to: ${WS_URL}`);
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
@@ -29,8 +41,9 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
     return () => {
       if (ws.readyState === WebSocket.OPEN) ws.close();
     };
-  }, [WS_URL]);
+  }, [WS_URL]); // Re-run this effect when WS_URL changes
 
+  // --- KEYBOARD CONTROLS ---
   useEffect(() => {
     const validKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
 
@@ -64,18 +77,38 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
     return activeKeys[key] ? "key-btn active" : "key-btn";
   };
 
+  const toggleMode = () => {
+      setIsTestMode(!isTestMode);
+      setStreamKey(Date.now()); // Force video reload
+  };
+
   return (
     <div className="genesis-wrapper">
       <div className="genesis-header">
-        <h2>Genesis Robot Teleoperation</h2>
-        <div className={`status-badge ${isConnected ? 'live' : 'offline'}`}>
-          <span className="dot">●</span> 
-          {isConnected ? "CONNECTED" : "DISCONNECTED"}
+        <div className="header-left">
+            <h2>{isTestMode ? "Test Stream (Green Box)" : "Genesis Simulation"}</h2>
+            <div className={`status-badge ${isConnected ? 'live' : 'offline'}`}>
+            <span className="dot">●</span> 
+            {isConnected ? "CONNECTED" : "DISCONNECTED"}
+            </div>
         </div>
+        
+        <button 
+            className={`mode-toggle ${isTestMode ? 'test-mode' : 'real-mode'}`}
+            onClick={toggleMode}
+        >
+            {isTestMode ? "Switch to Real Physics" : "Switch to Test Mode"}
+        </button>
       </div>
 
       <div className="stream-container">
-        <img src={STREAM_URL} alt="Genesis Simulation" className="video-feed" />
+        {/* We use key={streamKey} to force React to destroy and recreate the img tag */}
+        <img 
+            key={streamKey} 
+            src={STREAM_URL} 
+            alt="Simulation Feed" 
+            className="video-feed" 
+        />
       </div>
 
       {/* Control Pad */}
@@ -91,6 +124,7 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
           </div>
         </div>
         <div className="instructions">
+          <p>Mode: <strong>{isTestMode ? "SIMPLE TEST" : "PHYSICS ENGINE"}</strong></p>
           <p>Use <strong>Arrow Keys</strong> to move.</p>
         </div>
       </div>

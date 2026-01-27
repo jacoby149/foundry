@@ -11,13 +11,21 @@
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
+/* --- HEADER LAYOUT --- */
 .genesis-header {
   width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
   max-width: 640px;
+  display: flex;
+  justify-content: space-between; /* Pushes Left section and Button apart */
+  align-items: center; 
+  margin-bottom: 1.5rem;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 
 .genesis-header h2 {
@@ -26,6 +34,39 @@
   font-weight: 600;
 }
 
+/* --- TOGGLE BUTTON STYLES --- */
+.mode-toggle {
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  outline: none;
+}
+
+/* Green/Blue style for Test Mode */
+.mode-toggle.test-mode {
+  background-color: var(--bg-secondary, #2c3e50);
+  color: var(--text-main, #ecf0f1);
+  border-color: var(--border, #34495e);
+}
+.mode-toggle.test-mode:hover {
+  background-color: var(--border, #34495e);
+}
+
+/* Red style for Real Physics Mode */
+.mode-toggle.real-mode {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.5);
+}
+.mode-toggle.real-mode:hover {
+  background-color: rgba(239, 68, 68, 0.3);
+}
+
+/* --- VIDEO FEED --- */
 .stream-container {
   position: relative;
   border-radius: 8px;
@@ -41,14 +82,24 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* CRITICAL: Makes the 128x96 low-res streams look crisp, not blurry */
+  image-rendering: pixelated; 
 }
 
+/* --- STATUS BADGE --- */
 .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: bold;
   border: 1px solid transparent;
+}
+
+.status-badge .dot {
+  font-size: 10px;
 }
 
 .status-badge.live { 
@@ -63,15 +114,18 @@
   border-color: rgba(248, 113, 113, 0.3);
 }
 
-/* Controls */
+/* --- CONTROLS --- */
 .control-panel {
   margin-top: 1.5rem;
   display: flex;
   gap: 2rem;
   align-items: center;
+  justify-content: center;
   padding: 1rem 2rem;
   border-radius: 12px;
-  background: rgba(128, 128, 128, 0.05); /* Subtle background for controls */
+  background: rgba(128, 128, 128, 0.05);
+  width: 100%;
+  max-width: 640px;
 }
 
 .d-pad {
@@ -91,7 +145,6 @@
   align-items: center;
   justify-content: center;
   font-size: 1rem;
-  /* Key styling adapting to theme */
   background: var(--bg-secondary, #333); 
   color: var(--text-secondary, #888);
   border: 1px solid var(--border, #444);
@@ -107,4 +160,14 @@
   box-shadow: 0 0 0 transparent;
 }
 
-.instructions p { margin: 0; opacity: 0.7; font-size: 0.9rem; }
+.instructions {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.instructions p { 
+    margin: 4px 0; 
+    opacity: 0.7; 
+    font-size: 0.9rem; 
+}
