@@ -28,6 +28,7 @@ app.add_middleware(
 app.include_router(openscad_playground_router)
 app.include_router(openscad_render_router)
 app.include_router(chat_router)
+# app.include_router(genesis_router)
 
 @app.get("/", response_class=HTMLResponse)
 def root():
