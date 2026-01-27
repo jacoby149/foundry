@@ -16,7 +16,7 @@
   width: 100%;
   max-width: 640px;
   display: flex;
-  justify-content: space-between; /* Pushes Left section and Button apart */
+  justify-content: space-between;
   align-items: center; 
   margin-bottom: 1.5rem;
 }
@@ -46,7 +46,6 @@
   outline: none;
 }
 
-/* Green/Blue style for Test Mode */
 .mode-toggle.test-mode {
   background-color: var(--bg-secondary, #2c3e50);
   color: var(--text-main, #ecf0f1);
@@ -56,7 +55,6 @@
   background-color: var(--border, #34495e);
 }
 
-/* Red style for Real Physics Mode */
 .mode-toggle.real-mode {
   background-color: rgba(239, 68, 68, 0.2);
   color: #fca5a5;
@@ -66,9 +64,9 @@
   background-color: rgba(239, 68, 68, 0.3);
 }
 
-/* --- VIDEO FEED --- */
+/* --- VIDEO FEED CONTAINER --- */
 .stream-container {
-  position: relative;
+  position: relative; /* Critical for overlay positioning */
   border-radius: 8px;
   overflow: hidden;
   background: #000;
@@ -82,8 +80,43 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* CRITICAL: Makes the 128x96 low-res streams look crisp, not blurry */
   image-rendering: pixelated; 
+}
+
+/* --- NEW: LOADING OVERLAY --- */
+.stream-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.85); /* Dark semi-transparent background */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #e5e5e5;
+  z-index: 10;
+  backdrop-filter: blur(3px); /* Blur the broken image behind it */
+}
+
+.stream-overlay p {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 10px;
+  opacity: 0.8;
+}
+
+/* --- NEW: SPINNER ANIMATION --- */
+.spinner {
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid var(--primary, #3b82f6); /* Matches active keys */
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* --- STATUS BADGE --- */

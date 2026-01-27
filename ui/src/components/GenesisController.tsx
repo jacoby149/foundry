@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import './GenesisController.css';
 
 interface GenesisControllerProps {
@@ -13,39 +13,70 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [activeKeys, setActiveKeys] = useState<KeyState>({});
   
-  // TOGGLE STATE: Default to Test Mode so you can check connection first
-  const [isTestMode, setIsTestMode] = useState<boolean>(true);
-  const [streamKey, setStreamKey] = useState(Date.now()); // Forces img reload
+  // 1. DEFAULT TO PHYSICS MODE (False)
+  const [isTestMode, setIsTestMode] = useState<boolean>(false);
+  
+  // Stream Key forces the <img> to reload when connection drops
+  const [streamKey, setStreamKey] = useState(Date.now()); 
 
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // --- DYNAMIC ENDPOINT SWITCHING ---
-  // If Test Mode -> "/stream"
-  // If Physics Mode -> "/sim_stream"
+  // --- DYNAMIC ENDPOINTS ---
   const prefix = isTestMode ? "stream" : "sim_stream";
-  
-  // We add ?t=... to force the browser to drop the old connection and start a new one
   const STREAM_URL = `http://${backendUrl}/${prefix}/video_feed?t=${streamKey}`;
   const WS_URL = `ws://${backendUrl}/${prefix}/ws`;
 
-  // --- WEBSOCKET CONNECTION ---
+  // --- ROBUST WEBSOCKET CONNECTION ---
   useEffect(() => {
-    console.log(`[Switching Network] Connecting to: ${WS_URL}`);
-    
-    // Close existing connection if any
-    if (wsRef.current) wsRef.current.close();
+    // Clear any pending reconnects if URL changes
+    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
 
-    const ws = new WebSocket(WS_URL);
-    wsRef.current = ws;
+    const connect = () => {
+      console.log(`[WS] Connecting to: ${WS_URL}`);
+      const ws = new WebSocket(WS_URL);
+      wsRef.current = ws;
 
-    ws.onopen = () => setIsConnected(true);
-    ws.onclose = () => setIsConnected(false);
-    ws.onerror = () => setIsConnected(false);
+      ws.onopen = () => {
+        console.log("[WS] Connected");
+        setIsConnected(true);
+        // When WS connects, force image refresh too (syncs them up)
+        setStreamKey(Date.now());
+      };
+
+      ws.onclose = () => {
+        console.log("[WS] Disconnected. Retrying in 2s...");
+        setIsConnected(false);
+        // 2. AUTO RECONNECT LOGIC
+        reconnectTimeoutRef.current = setTimeout(connect, 2000);
+      };
+
+      ws.onerror = (err) => {
+        console.warn("[WS] Error:", err);
+        ws.close(); // Trigger onclose to handle retry
+      };
+    };
+
+    connect();
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) ws.close();
+      if (wsRef.current) wsRef.current.close();
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
     };
-  }, [WS_URL]); // Triggered when WS_URL changes (via toggle)
+  }, [WS_URL]); 
+
+  // --- ROBUST STREAM HANDLING ---
+  const handleStreamError = () => {
+      // 3. AUTO HEAL VIDEO STREAM
+      // If image fails to load, wait 1s and try again
+      if (isConnected) {
+          // If WS is connected but image failed, retry fast
+          setTimeout(() => setStreamKey(Date.now()), 1000);
+      } else {
+          // If WS is down, retry slower
+          setTimeout(() => setStreamKey(Date.now()), 3000);
+      }
+  };
 
   // --- KEYBOARD CONTROLS ---
   useEffect(() => {
@@ -83,7 +114,7 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
 
   const toggleMode = () => {
       setIsTestMode(!isTestMode);
-      setStreamKey(Date.now()); // This forces the <img> tag to refresh
+      setStreamKey(Date.now()); 
   };
 
   return (
@@ -93,7 +124,7 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
             <h2>{isTestMode ? "Simple Stream Test" : "MuJoCo Physics"}</h2>
             <div className={`status-badge ${isConnected ? 'live' : 'offline'}`}>
             <span className="dot">●</span> 
-            {isConnected ? "CONNECTED" : "DISCONNECTED"}
+            {isConnected ? "CONNECTED" : "RECONNECTING..."}
             </div>
         </div>
         
@@ -106,12 +137,20 @@ const GenesisController: React.FC<GenesisControllerProps> = ({
       </div>
 
       <div className="stream-container">
-        {/* key={streamKey} forces React to destroy and recreate this element when toggling */}
+        {/* 4. LOADING OVERLAY */}
+        {!isConnected && (
+            <div className="stream-overlay">
+                <div className="spinner"></div>
+                <p>Waiting for Engine...</p>
+            </div>
+        )}
+        
         <img 
             key={streamKey} 
             src={STREAM_URL} 
             alt="Simulation Feed" 
-            className="video-feed" 
+            className="video-feed"
+            onError={handleStreamError} // Self-healing logic
         />
       </div>
 

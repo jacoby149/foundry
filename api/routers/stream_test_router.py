@@ -4,7 +4,7 @@ import threading
 import json
 import time
 import asyncio
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Request
 from fastapi.responses import StreamingResponse
 
 # --- CONFIG ---
@@ -23,7 +23,6 @@ class SimpleGame:
     def __init__(self):
         self.x = WIDTH // 2
         self.y = HEIGHT // 2
-        
         self.keys = {
             "ArrowUp": False, "ArrowDown": False, 
             "ArrowLeft": False, "ArrowRight": False
@@ -31,8 +30,6 @@ class SimpleGame:
         self.lock = threading.Lock()
         self.current_frame = None
         self.running = True
-
-        print(" [SimpleGame] Engine Started")
         threading.Thread(target=self._loop, daemon=True).start()
 
     def update_key(self, key, is_pressed):
@@ -43,22 +40,17 @@ class SimpleGame:
     def _loop(self):
         while self.running:
             start_time = time.time()
-
             with self.lock:
-                # 1. Update Position
                 if self.keys["ArrowUp"]: self.y -= MOVE_SPEED
                 if self.keys["ArrowDown"]: self.y += MOVE_SPEED
                 if self.keys["ArrowLeft"]: self.x -= MOVE_SPEED
                 if self.keys["ArrowRight"]: self.x += MOVE_SPEED
-
                 self.x = max(0, min(WIDTH - BOX_SIZE, self.x))
                 self.y = max(0, min(HEIGHT - BOX_SIZE, self.y))
-
-                # 2. Render
+                
                 canvas = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
                 cv2.rectangle(canvas, (self.x, self.y), (self.x + BOX_SIZE, self.y + BOX_SIZE), (0, 255, 0), -1)
-                cv2.putText(canvas, "TEST MODE (GREEN BOX)", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-
+                cv2.putText(canvas, "TEST MODE", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                 ret, buffer = cv2.imencode('.jpg', canvas)
                 self.current_frame = buffer.tobytes()
 
@@ -67,50 +59,51 @@ class SimpleGame:
             if sleep_time > 0:
                 time.sleep(sleep_time)
 
-# --- HELPER: LAZY START ---
 def ensure_game_running():
     global game
     with game_lock:
         if game is None:
             game = SimpleGame()
 
-# --- ROUTER ---
 router = APIRouter(prefix="/stream", tags=["StreamTest"])
 
-def frame_generator():
-    ensure_game_running() # Auto-start on video request
-    while True:
-        if game and game.current_frame:
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + game.current_frame + b'\r\n')
-        time.sleep(1.0 / FPS)
+# --- THE FIX ---
+async def frame_generator(request: Request):
+    ensure_game_running()
+    
+    try:
+        while True:
+            # 1. Check if Client Disconnected
+            if await request.is_disconnected():
+                break
+
+            if game and game.current_frame:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + game.current_frame + b'\r\n')
+            
+            await asyncio.sleep(1.0 / FPS)
+
+    except asyncio.CancelledError:
+        # 2. THIS FIXES THE HOT RELOAD HANG
+        # Uvicorn cancels this task on reload. We must exit immediately.
+        print(" [Stream] Stopping loop for reload...")
+        return
 
 @router.get("/video_feed")
-async def video_feed():
-    return StreamingResponse(frame_generator(), media_type="multipart/x-mixed-replace; boundary=frame")
+async def video_feed(request: Request):
+    return StreamingResponse(frame_generator(request), media_type="multipart/x-mixed-replace; boundary=frame")
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    
-    # 1. Auto-start on WebSocket connection
     ensure_game_running()
-    
-    # 2. Wait for game to be ready (Instant, but safe)
-    while game is None:
-        await asyncio.sleep(0.1)
-
+    while game is None: await asyncio.sleep(0.1)
     try:
         while True:
             data = await websocket.receive_text()
             event = json.loads(data)
-            
-            # Simple "Green Box" Logic
-            is_pressed = True if event['type'] == 'down' else False
-            game.update_key(event['key'], is_pressed)
-            
-    except WebSocketDisconnect:
-        # Don't print error on disconnect, it's normal during hot reload
+            game.update_key(event['key'], event['type'] == 'down')
+    except (WebSocketDisconnect, asyncio.CancelledError):
         pass
-    except Exception as e:
-        print(f" [SimpleGame] Error: {e}")
+    except Exception:
+        pass
