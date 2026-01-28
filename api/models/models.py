@@ -18,7 +18,7 @@ class PlaygroundPreferences(BaseModel):
     color: str = "#f9d72c"
     show_axes: bool = True
     layout_mode: str = "multi"
-    editor: bool = True
+    editor: bool = False
     viewer: bool = True
     customizer: bool = False
     logs: bool = False

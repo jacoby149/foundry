@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import PartsMakerChat from './components/PartsMakerChat';
-import GenesisController from './components/GenesisController';
 // import PartsExplorer from './components/PartsExplorer';
 
 const navBarStyle: React.CSSProperties = {
@@ -47,9 +46,6 @@ export default function App() {
                 <NavLink to="ui/" end style={linkStyle}>
                     Maker Chat
                 </NavLink>
-                <NavLink to="ui/play" style={linkStyle}>
-                    Robot Play
-                </NavLink>
             </div>
         </div>
 
@@ -89,7 +85,6 @@ export default function App() {
       }}>
         <Routes>
           <Route path="ui/" element={<PartsMakerChat />} />
-          <Route path="ui/play" element={<GenesisController backendUrl="localhost:8000" />} />
           {/* <Route path="ui/explorer" element={<PartsExplorer />} /> */}
         </Routes>
       </main>
