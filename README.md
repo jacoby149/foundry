@@ -6,6 +6,8 @@
 
 type what you want and it will build a 3D model for you! 
 
+Similar to https://github.com/Adam-CAD/CADAM
+
 
 
 ![car](./car.jpg)
