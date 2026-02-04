@@ -2,9 +2,11 @@
 
 
 
-The chatbot that CADs, type what you want and it will build a 3D model for you! 
+**<u>The AI chatbot that CADs</u>**
 
-Anyone can run this locally, (don't need to know how to code!) instructions below! :)
+type what you want and it will build a 3D model for you! 
+
+
 
 ![car](./car.jpg)
 
