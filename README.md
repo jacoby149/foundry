@@ -2,7 +2,14 @@
 
 
 
-https://github.com/openscad/openscad-playground
+The chatbot that CADs, type what you want and it will build a 3D model for you! 
+
+1. Install Docker
+2. Clone this project
+3. copy the api/.env_example, make a file api/.env
+   1. set your OPENAI_API_KEY from https://platform.openai.com/api-keys
+4. Run **docker compose up --build**
+5. Visit localhost:3000!
 
 ![car](./car.jpg)
 
@@ -10,9 +17,9 @@ https://github.com/openscad/openscad-playground
 
 ### Credits
 
-The chatbot that CADs, type what you want and it will build a 3D model for you!
+<u>**This project uses**</u> 
 
-Thanks https://ochafik.com/openscad2!
+[openscad]: https://github.com/openscad/openscad-playground
 
-This project uses **openscad playground** by https://github.com/ochafik to visualize the outputted scad models!
+ by https://github.com/ochafik to visualize the outputted scad models!
 
