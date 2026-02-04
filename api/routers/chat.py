@@ -65,6 +65,7 @@ async def chat_scad_endpoint(req: ChatRequest):
             "- Always use at least two files unless impossible.\n"
             "- At the end of /main.scad, ensure any test/demo code or preview is included; for simplicity, just call the main module directly (e.g., 'my_object();').\n"
             "- The response MUST be VALID JSON matching the schema. No comments or extra output.\n"
+            "- Make the object pass all the parameters down from the top object, so that all the vars are defined at the top. This will make it easily customizeable by the user."
             "- Summarize your design and file structure in 'reply_text'.\n"
             "\n"
             "EXAMPLE USER REQUEST: make a simple cube\n"
